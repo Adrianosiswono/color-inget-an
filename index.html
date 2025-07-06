@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Color Memory Game</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: linear-gradient(135deg, #f0f0f0, #da6464);
+        margin: 0;
+        padding: 20px;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .game-info {
+        text-align: center;
+        color: white;
+        margin-bottom: 30px;
+      }
+
+      .game-info h1 {
+        font-size: 2.5em;
+        margin: 0;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .score {
+        font-size: 1.5em;
+        margin: 10px 0;
+      }
+
+      .game-board {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+        margin-bottom: 30px;
+      }
+
+      .color-btn {
+        width: 150px;
+        height: 150px;
+        border: none;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      }
+
+      .color-btn:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 25px rgba(0, 0, 0, 0.3);
+      }
+
+      .color-btn.active {
+        transform: scale(1.1);
+        box-shadow: 0 0 30px rgba(255, 255, 255, 0.8);
+      }
+
+      .red {
+        background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+      }
+      .blue {
+        background: linear-gradient(45deg, #4ecdc4, #44a08d);
+      }
+      .green {
+        background: linear-gradient(45deg, #a8e6cf, #7fcdcd);
+      }
+      .yellow {
+        background: linear-gradient(45deg, #ffd93d, #ffb347);
+      }
+
+      .start-btn {
+        padding: 15px 40px;
+        font-size: 1.2em;
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .start-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      .message {
+        color: white;
+        font-size: 1.2em;
+        text-align: center;
+        margin: 20px 0;
+        min-height: 30px;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+      }
+
+      .pulse {
+        animation: pulse 0.5s ease-in-out;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="game-info">
+      <h1>🎯 Color Memory</h1>
+      <div class="score">Level: <span id="level">0</span></div>
+      <div class="message" id="message">Tekan "Mulai" untuk bermain!</div>
+    </div>
+
+    <div class="game-board">
+      <button class="color-btn red" data-color="red"></button>
+      <button class="color-btn blue" data-color="blue"></button>
+      <button class="color-btn green" data-color="green"></button>
+      <button class="color-btn yellow" data-color="yellow"></button>
+    </div>
+
+    <button class="start-btn" onclick="startGame()">Mulai Game</button>
+
+    <script>
+      let sequence = [];
+      let playerSequence = [];
+      let level = 0;
+      let isPlayerTurn = false;
+      let isPlaying = false;
+
+      const colors = ["red", "blue", "green", "yellow"];
+      const buttons = document.querySelectorAll(".color-btn");
+      const levelDisplay = document.getElementById("level");
+      const messageDisplay = document.getElementById("message");
+
+      function startGame() {
+        sequence = [];
+        playerSequence = [];
+        level = 0;
+        isPlaying = true;
+        nextLevel();
+      }
+
+      function nextLevel() {
+        level++;
+        levelDisplay.textContent = level;
+        playerSequence = [];
+        isPlayerTurn = false;
+
+        // Tambah warna random ke sequence
+        const randomColor = colors[Math.floor(Math.random() * colors.length)];
+        sequence.push(randomColor);
+
+        messageDisplay.textContent = `Level ${level} - Perhatikan urutan!`;
+
+        // Tampilkan sequence
+        setTimeout(() => {
+          showSequence();
+        }, 1000);
+      }
+
+      function showSequence() {
+        let i = 0;
+        const interval = setInterval(() => {
+          if (i < sequence.length) {
+            flashButton(sequence[i]);
+            i++;
+          } else {
+            clearInterval(interval);
+            isPlayerTurn = true;
+            messageDisplay.textContent = `Giliran Anda! Ulangi urutan warna.`;
+          }
+        }, 800);
+      }
+
+      function flashButton(color) {
+        const button = document.querySelector(`[data-color="${color}"]`);
+        button.classList.add("active");
+        setTimeout(() => {
+          button.classList.remove("active");
+        }, 400);
+      }
+
+      // Event listener untuk tombol warna
+      buttons.forEach((button) => {
+        button.addEventListener("click", () => {
+          if (!isPlayerTurn || !isPlaying) return;
+
+          const color = button.dataset.color;
+          playerSequence.push(color);
+
+          // Animasi tombol
+          button.classList.add("pulse");
+          setTimeout(() => button.classList.remove("pulse"), 500);
+
+          // Cek apakah pilihan benar
+          const currentIndex = playerSequence.length - 1;
+          if (playerSequence[currentIndex] !== sequence[currentIndex]) {
+            gameOver();
+            return;
+          }
+
+          // Cek apakah sequence lengkap
+          if (playerSequence.length === sequence.length) {
+            isPlayerTurn = false;
+            messageDisplay.textContent = `Benar! Bersiap untuk level berikutnya...`;
+            setTimeout(() => {
+              nextLevel();
+            }, 1500);
+          }
+        });
+      });
+
+      function gameOver() {
+        isPlaying = false;
+        isPlayerTurn = false;
+        messageDisplay.textContent = `Game Over! Level tertinggi: ${level}`;
+
+        // Animasi game over
+        buttons.forEach((button) => {
+          button.style.filter = "brightness(0.5)";
+        });
+
+        setTimeout(() => {
+          buttons.forEach((button) => {
+            button.style.filter = "brightness(1)";
+          });
+          messageDisplay.textContent = `Tekan "Mulai" untuk bermain lagi!`;
+        }, 2000);
+      }
+    </script>
+  </body>
+</html>
